@@ -1,6 +1,6 @@
 import { AppError } from "./AppError.js";
 
-export function parseId(value, label = "id") {
+export function parseId(value: unknown, label = "id"): number {
     const id = Number(value);
 
     if (!Number.isInteger(id) || id < 1) {
