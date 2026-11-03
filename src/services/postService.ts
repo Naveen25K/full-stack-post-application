@@ -1,7 +1,13 @@
 import { AppError } from "../utils/AppError.js";
 import * as postRepo from "../repositories/postRepo.js";
 
-export async function createPost(userId, title, description) {
+type ListQuery = { scope: unknown; page: unknown; limit: unknown };
+
+export async function createPost(
+    userId: number,
+    title: unknown,
+    description: unknown
+): Promise<postRepo.Post> {
     if (typeof title !== "string" || !title.trim()) {
         throw new AppError("Title is required", 400);
     }
@@ -12,22 +18,26 @@ export async function createPost(userId, title, description) {
         throw new AppError("Description must be text", 400);
     }
 
-    return postRepo.create(userId, title.trim(), description ?? null);
+    const cleanDescription = typeof description === "string" ? description : null;
+
+    return postRepo.create(userId, title.trim(), cleanDescription);
 }
 
-export async function listPosts(userId, { scope, page, limit }) {
+export async function listPosts(userId: number, query: ListQuery): Promise<postRepo.PostListItem[]> {
+    const { scope } = query;
+
     if (scope !== "mine" && scope !== "others") {
         throw new AppError("scope must be 'mine' or 'others'", 400);
     }
 
-    const safePage = Math.max(Number.parseInt(page) || 1, 1);
-    const safeLimit = Math.min(Math.max(Number.parseInt(limit) || 10, 1), 50);
-    const offset = (safePage - 1) * safeLimit;
+    const page = Math.max(Number.parseInt(String(query.page)) || 1, 1);
+    const limit = Math.min(Math.max(Number.parseInt(String(query.limit)) || 10, 1), 50);
+    const offset = (page - 1) * limit;
 
-    return postRepo.list({ userId, scope, limit: safeLimit, offset });
+    return postRepo.list({ userId, scope, limit, offset });
 }
 
-export async function deletePost(userId, postId) {
+export async function deletePost(userId: number, postId: number): Promise<void> {
     const post = await postRepo.findById(postId);
 
     if (!post) {

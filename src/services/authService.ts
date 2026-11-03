@@ -4,20 +4,22 @@ import { config } from "../config/index.js";
 import { AppError } from "../utils/AppError.js";
 import * as userRepo from "../repositories/userRepo.js";
 
-function createToken(user) {
+type AuthResult = { user: userRepo.NewUser; token: string };
+
+function createToken(user: { id: number }): string {
     return jwt.sign({ id: user.id }, config.jwtSecret, {
         expiresIn: config.jwtExpiresInSeconds,
     });
 }
 
-function normalizeEmail(email) {
+function normalizeEmail(email: unknown): string {
     return typeof email === "string" ? email.trim().toLowerCase() : "";
 }
 
-export async function signup(rawEmail, password) {
+export async function signup(rawEmail: unknown, password: unknown): Promise<AuthResult> {
     const email = normalizeEmail(rawEmail);
 
-    if (!email || !password) {
+    if (!email || typeof password !== "string" || !password) {
         throw new AppError("Email and password are required", 400);
     }
     if (password.length < 6) {
@@ -35,10 +37,10 @@ export async function signup(rawEmail, password) {
     return { user, token: createToken(user) };
 }
 
-export async function login(rawEmail, password) {
+export async function login(rawEmail: unknown, password: unknown): Promise<AuthResult> {
     const email = normalizeEmail(rawEmail);
 
-    if (!email || !password) {
+    if (!email || typeof password !== "string" || !password) {
         throw new AppError("Email and password are required", 400);
     }
 

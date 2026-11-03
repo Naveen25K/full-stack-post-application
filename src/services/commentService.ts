@@ -2,14 +2,18 @@ import { AppError } from "../utils/AppError.js";
 import * as postRepo from "../repositories/postRepo.js";
 import * as commentRepo from "../repositories/commentRepo.js";
 
-async function assertPostExists(postId) {
+async function assertPostExists(postId: number): Promise<void> {
     const post = await postRepo.findById(postId);
     if (!post) {
         throw new AppError("Post not found", 404);
     }
 }
 
-export async function addComment(userId, postId, content) {
+export async function addComment(
+    userId: number,
+    postId: number,
+    content: unknown
+): Promise<commentRepo.Comment> {
     if (typeof content !== "string" || !content.trim()) {
         throw new AppError("Comment can not be empty", 400);
     }
@@ -19,13 +23,13 @@ export async function addComment(userId, postId, content) {
     return commentRepo.create(postId, userId, content.trim());
 }
 
-export async function listComments(postId) {
+export async function listComments(postId: number): Promise<commentRepo.CommentListItem[]> {
     await assertPostExists(postId);
 
     return commentRepo.listByPost(postId);
 }
 
-export async function deleteComment(userId, commentId) {
+export async function deleteComment(userId: number, commentId: number): Promise<void> {
     const comment = await commentRepo.findWithPostOwner(commentId);
 
     if (!comment) {
